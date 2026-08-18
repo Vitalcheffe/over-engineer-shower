@@ -74,3 +74,47 @@ if __name__ == '__main__':
     temps, results = sweep_temperatures()
     for t, r in zip(temps[::10], results[::10]):
         print(f"{t:.0f}°C: PMV={r.comfort_pmv:+.2f}, E={r.energy_used:.0f}kJ")
+
+import json
+
+def run_full_analysis():
+    """Run the full sweep and return structured results."""
+    temps, results = sweep_temperatures()
+    output = {
+        'project': 'optimal-shower',
+        'parameters': {
+            'h_water': H_WATER,
+            'body_surface': BODY_SURFACE,
+            'body_temp': BODY_TEMP,
+            'ambient_temp': AMBIENT_TEMP,
+            'shower_duration': SHOWER_DURATION,
+            'flow_rate': FLOW_RATE,
+        },
+        'sweep': [
+            {
+                'water_temp': float(t),
+                'comfort_pmv': float(r.comfort_pmv),
+                'comfort_ppd': float(r.comfort_ppd),
+                'heat_loss_kj': float(r.heat_loss),
+                'energy_used_kj': float(r.energy_used),
+                'comfort_energy_ratio': float(r.comfort_energy_ratio),
+            }
+            for t, r in zip(temps, results)
+        ],
+        'optimal': None,
+    }
+    # Find the Pareto-optimal temperature (max comfort/energy ratio)
+    best_idx = max(range(len(results)), key=lambda i: results[i].comfort_energy_ratio)
+    best = results[best_idx]
+    output['optimal'] = {
+        'water_temp': float(temps[best_idx]),
+        'comfort_pmv': float(best.comfort_pmv),
+        'comfort_ppd': float(best.comfort_ppd),
+        'heat_loss_kj': float(best.heat_loss),
+        'energy_used_kj': float(best.energy_used),
+        'comfort_energy_ratio': float(best.comfort_energy_ratio),
+    }
+    return output
+
+if __name__ == '__main__' and not 'sweep_temperatures' in dir():
+    pass  # already handled above
