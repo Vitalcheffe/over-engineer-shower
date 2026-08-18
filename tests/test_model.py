@@ -38,12 +38,13 @@ def test_pmv_near_zero_at_optimal():
     assert abs(r.comfort_pmv) < 0.1, f"PMV={r.comfort_pmv} at 34°C, expected ~0"
 
 
-def test_heat_loss_increases_with_temp():
-    """Higher water temp → more body heat loss (when T_water > body temp)."""
-    r_low = simulate_shower(36.0)
-    r_high = simulate_shower(42.0)
-    assert r_high.heat_loss >= r_low.heat_loss, \
-        f"Heat loss at 42°C ({r_high.heat_loss}) should be >= 36°C ({r_low.heat_loss})"
+def test_heat_loss_decreases_above_body_temp():
+    """Above body temp (37°C), the body gains heat from water, so heat_loss = 0.
+    Below body temp, heat_loss > 0 and increases as water gets colder."""
+    r_below = simulate_shower(34.0)
+    r_above = simulate_shower(42.0)
+    assert r_above.heat_loss == 0.0, "Heat loss should be 0 when water > body temp"
+    assert r_below.heat_loss > 0.0, "Heat loss should be > 0 when water < body temp"
 
 
 def test_energy_increases_with_temp():
